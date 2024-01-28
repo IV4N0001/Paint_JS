@@ -64,17 +64,14 @@
         }
         
         function rectangle(x0, y0, width, height, color = 'white') {
-            let x1 = Math.min(x0 + width, startX);
-            let y1 = Math.min(y0 + height, startY);
-            let x2 = Math.max(x0 + width, startX);
-            let y2 = Math.max(y0 + height, startY);
+            let x1 = x0 + width;
+            let y1 = y0 + height;
 
-            line(x1, y1, x2, y1, color); // Top line
-            line(x2, y1, x2, y2, color); // Right line
-            line(x2, y2, x1, y2, color); // Bottom line
-            line(x1, y2, x1, y1, color); // Left line
+            line(x0, y0, x1, y0, color); // Top line
+            line(x1, y0, x1, y1, color); // Right line
+            line(x1, y1, x0, y1, color); // Bottom line
+            line(x0, y1, x0, y0, color); // Left line
         }
-
 
         function setPixel(x, y, color = 'white') {
             ctx.fillStyle = color;
