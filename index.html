@@ -18,6 +18,7 @@
     <div id="buttons">
         <button onclick="drawMode = 'line';">Dibujar Líneas</button>
         <button onclick="drawMode = 'square';">Dibujar Cuadrados</button>
+        <button onclick="drawMode = 'rectangle';">Dibujar Rectangulos</button>
     </div>
     <script>
         let canvas = document.getElementById('canvas');
@@ -62,6 +63,19 @@
             line(x0, y1, x0, y0, color); // Left line
         }
         
+        function rectangle(x0, y0, width, height, color = 'white') {
+            let x1 = Math.min(x0 + width, startX);
+            let y1 = Math.min(y0 + height, startY);
+            let x2 = Math.max(x0 + width, startX);
+            let y2 = Math.max(y0 + height, startY);
+
+            line(x1, y1, x2, y1, color); // Top line
+            line(x2, y1, x2, y2, color); // Right line
+            line(x2, y2, x1, y2, color); // Bottom line
+            line(x1, y2, x1, y1, color); // Left line
+        }
+
+
         function setPixel(x, y, color = 'white') {
             ctx.fillStyle = color;
             ctx.fillRect(x, y, 1, 1);
@@ -80,6 +94,10 @@
                     let xSign = figure.xSign;
                     let ySign = figure.ySign;
                     square(figure.startX, figure.startY, length, xSign, ySign);
+                } else if (figure.type === 'rectangle') {
+                    let width = figure.width;
+                    let height = figure.height;
+                    rectangle(figure.startX, figure.startY, width, height);
                 }
             }
 
@@ -94,6 +112,12 @@
                     let xSign = Math.sign(mouseX - startX);
                     let ySign = Math.sign(mouseY - startY);
                     square(startX, startY, length, xSign, ySign);
+                } else if (drawMode === 'rectangle') {
+                    let width = Math.abs(mouseX - startX);
+                    let height = Math.abs(mouseY - startY);
+                    let x = Math.min(mouseX, startX);
+                    let y = Math.min(mouseY, startY);
+                    rectangle(x, y, width, height);
                 }
             }
         }
@@ -123,6 +147,12 @@
                     let xSign = Math.sign(mouseX - startX);
                     let ySign = Math.sign(mouseY - startY);
                     figures.push({ type: 'square', startX: startX, startY: startY, length: length, xSign: xSign, ySign: ySign });
+                } else if (drawMode === 'rectangle') {
+                    let width = Math.abs(mouseX - startX);
+                    let height = Math.abs(mouseY - startY);
+                    let x = Math.min(mouseX, startX);
+                    let y = Math.min(mouseY, startY);
+                    figures.push({ type: 'rectangle', startX: x, startY: y, width: width, height: height });
                 }
             }
         });
