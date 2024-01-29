@@ -1,48 +1,23 @@
-//Algoritmo de Bresenham
+let canvas = document.getElementById('canvas');
+        let ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let startX, startY, mouseX, mouseY;
+        let figures = [];
+        let drawMode = 'line'; // Default mode is drawing lines
 
-function line(x0, y0, x1, y1) {
-    var dx = Math.abs(x1 - x0);
-    var dy = Math.abs(y1 - y0);
-    var sx = (x0 < x1) ? 1 : -1;
-    var sy = (y0 < y1) ? 1 : -1;
-    var err = dx - dy;
-
-    while(true) {
-        setPixel(x0, y0); // Do what you need to for this
-        if ((x0 === x1) && (y0 === y1)) break;
-        var e2 = 2*err;
-        if (e2 > -dy) { err -= dy; x0  += sx; }
-        if (e2 < dx) { err += dx; y0  += sy; }
-    }
-}
-
-//Dibujar con lapiz
-        // Obtener el contexto del lienzo
-        var canvas = document.getElementById('canvas');
-        var ctx = canvas.getContext('2d');
-
-        // Variables para el seguimiento de eventos del mouse
-        var isDrawing = false;
-        var lines = [];  // Arreglo para almacenar las líneas
-        var straightLineMode = false;
-
-        // Función para establecer un píxel en las coordenadas (x, y)
-        function setPixel(x, y) {
-            ctx.fillRect(x, y, 1, 1);
-        }
-
-        // Algoritmo de Bresenham
-        function line(x0, y0, x1, y1) {
-            var dx = Math.abs(x1 - x0);
-            var dy = Math.abs(y1 - y0);
-            var sx = (x0 < x1) ? 1 : -1;
-            var sy = (y0 < y1) ? 1 : -1;
-            var err = dx - dy;
+        // Bresenham's line algorithm
+        function line(x0, y0, x1, y1, color = 'white') {
+            ctx.strokeStyle = color;
+            let dx = Math.abs(x1 - x0);
+            let dy = Math.abs(y1 - y0);
+            let sx = (x0 < x1) ? 1 : -1;
+            let sy = (y0 < y1) ? 1 : -1;
+            let err = dx - dy;
 
             while (true) {
-                setPixel(x0, y0); // Establecer el píxel en las coordenadas actuales
-                if ((x0 === x1) && (y0 === y1)) break;
-                var e2 = 2 * err;
+                setPixel(x0, y0, color);
+                if (x0 === x1 && y0 === y1) break;
+                let e2 = 2 * err;
                 if (e2 > -dy) {
                     err -= dy;
                     x0 += sx;
@@ -54,53 +29,104 @@ function line(x0, y0, x1, y1) {
             }
         }
 
-        // Manejadores de eventos del mouse
+        // Draw square using lines
+        function square(x0, y0, length, xSign, ySign, color = 'white') {
+            let x1 = x0 + length * xSign;
+            let y1 = y0 + length * ySign;
+
+            line(x0, y0, x1, y0, color); // Top line
+            line(x1, y0, x1, y1, color); // Right line
+            line(x1, y1, x0, y1, color); // Bottom line
+            line(x0, y1, x0, y0, color); // Left line
+        }
+        
+        function rectangle(x0, y0, width, height, color = 'white') {
+            let x1 = x0 + width;
+            let y1 = y0 + height;
+
+            line(x0, y0, x1, y0, color); // Top line
+            line(x1, y0, x1, y1, color); // Right line
+            line(x1, y1, x0, y1, color); // Bottom line
+            line(x0, y1, x0, y0, color); // Left line
+        }
+
+        function setPixel(x, y, color = 'white') {
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, 1, 1);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw all stored figures
+            for (let i = 0; i < figures.length; i++) {
+                let figure = figures[i];
+                if (figure.type === 'line') {
+                    line(figure.startX, figure.startY, figure.endX, figure.endY);
+                } else if (figure.type === 'square') {
+                    let length = figure.length;
+                    let xSign = figure.xSign;
+                    let ySign = figure.ySign;
+                    square(figure.startX, figure.startY, length, xSign, ySign);
+                } else if (figure.type === 'rectangle') {
+                    let width = figure.width;
+                    let height = figure.height;
+                    rectangle(figure.startX, figure.startY, width, height);
+                }
+            }
+
+            // Draw the current figure being drawn
+            if (isDrawing) {
+                if (drawMode === 'line') {
+                    line(startX, startY, mouseX, mouseY);
+                } else if (drawMode === 'square') {
+                    let lengthX = Math.abs(mouseX - startX);
+                    let lengthY = Math.abs(mouseY - startY);
+                    let length = Math.min(lengthX, lengthY);
+                    let xSign = Math.sign(mouseX - startX);
+                    let ySign = Math.sign(mouseY - startY);
+                    square(startX, startY, length, xSign, ySign);
+                } else if (drawMode === 'rectangle') {
+                    let width = Math.abs(mouseX - startX);
+                    let height = Math.abs(mouseY - startY);
+                    let x = Math.min(mouseX, startX);
+                    let y = Math.min(mouseY, startY);
+                    rectangle(x, y, width, height);
+                }
+            }
+        }
+
         canvas.addEventListener('mousedown', function (e) {
             isDrawing = true;
-            lines.push([]);  // Crear un nuevo conjunto de puntos para la nueva línea
+            startX = e.clientX - canvas.getBoundingClientRect().left;
+            startY = e.clientY - canvas.getBoundingClientRect().top;
         });
 
         canvas.addEventListener('mousemove', function (e) {
             if (!isDrawing) return;
-
-            var mouseX = e.clientX - canvas.getBoundingClientRect().left;
-            var mouseY = e.clientY - canvas.getBoundingClientRect().top;
-
-            // Agregar el punto actual a la última línea en el arreglo
-            lines[lines.length - 1].push({ x: mouseX, y: mouseY });
-
-            // Limpiar el canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Dibujar todas las líneas almacenadas
-            for (var i = 0; i < lines.length; i++) {
-                var linePoints = lines[i];
-                if (linePoints.length < 2) continue;  // No dibujar líneas incompletas
-
-                if (straightLineMode) {
-                    // Si está en modo de línea recta, dibujar solo la línea recta entre el primer y último punto
-                    var startPoint = linePoints[0];
-                    var endPoint = linePoints[linePoints.length - 1];
-                    line(startPoint.x, startPoint.y, endPoint.x, endPoint.y);
-                } else {
-                    // Si no está en modo de línea recta, dibujar todas las líneas guardadas
-                    for (var j = 1; j < linePoints.length; j++) {
-                        var startPoint = linePoints[j - 1];
-                        var endPoint = linePoints[j];
-                        line(startPoint.x, startPoint.y, endPoint.x, endPoint.y);
-                    }
-                }
-            }
+            mouseX = e.clientX - canvas.getBoundingClientRect().left;
+            mouseY = e.clientY - canvas.getBoundingClientRect().top;
+            draw();
         });
 
         canvas.addEventListener('mouseup', function () {
-            isDrawing = false;
+            if (isDrawing) {
+                isDrawing = false;
+                if (drawMode === 'line') {
+                    figures.push({ type: 'line', startX: startX, startY: startY, endX: mouseX, endY: mouseY });
+                } else if (drawMode === 'square') {
+                    let lengthX = Math.abs(mouseX - startX);
+                    let lengthY = Math.abs(mouseY - startY);
+                    let length = Math.min(lengthX, lengthY);
+                    let xSign = Math.sign(mouseX - startX);
+                    let ySign = Math.sign(mouseY - startY);
+                    figures.push({ type: 'square', startX: startX, startY: startY, length: length, xSign: xSign, ySign: ySign });
+                } else if (drawMode === 'rectangle') {
+                    let width = Math.abs(mouseX - startX);
+                    let height = Math.abs(mouseY - startY);
+                    let x = Math.min(mouseX, startX);
+                    let y = Math.min(mouseY, startY);
+                    figures.push({ type: 'rectangle', startX: x, startY: y, width: width, height: height });
+                }
+            }
         });
-
-        // Manejador de evento para el botón de línea recta
-        var straightLineBtn = document.getElementById('straightLineBtn');
-        straightLineBtn.addEventListener('click', function () {
-            straightLineMode = !straightLineMode;
-            straightLineBtn.textContent = straightLineMode ? 'Modo Libre' : 'Dibujar Línea Recta';
-        });
-

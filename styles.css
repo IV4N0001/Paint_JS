@@ -1,5 +1,28 @@
+body {
+    background-color: rgb(50, 52, 52);
+}
 #canvas {
-    background-color: rgb(213, 205, 131);
-    width: 500px;
-    height: 500px;
+    background-color: rgb(29, 30, 30);
+}
+
+#buttons {
+    margin-top: 10px;
+}
+
+#buttons button {
+    background-color: rgb(138, 142, 142);;
+    width: 100px; /* Ancho del botón */
+    height: 40px; /* Alto del botón */
+    margin-right: 10px; /* Espacio entre los botones */
+    font-size: 18px; /* Tamaño del texto */
+    position: relative; /* Establece la posición relativa para alinear la imagen */
+    overflow: hidden; /* Oculta el contenido que se desborda del botón */
+}
+
+#buttons button img {
+    width: 100%; /* Ancho de la imagen al 100% del botón */
+    height: 100%; /* Altura de la imagen al 100% del botón */
+    position: absolute; /* Establece la posición absoluta para que la imagen llene el botón */
+    top: 0; /* Coloca la imagen en la parte superior del botón */
+    left: 0; /* Coloca la imagen en la parte izquierda del botón */
 }

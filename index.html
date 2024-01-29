@@ -3,156 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <title>Canvas Drawing</title>
-    <style>
-        #canvas {
-            background-color: rgb(29, 30, 30);
-        }
-        #buttons {
-            margin-top: 10px;
-        }
-    </style>
 </head>
 <body>
     <canvas id="canvas" width="800" height="600"></canvas>
     <div id="buttons">
-        <button onclick="drawMode = 'line';">Dibujar Líneas</button>
-        <button onclick="drawMode = 'square';">Dibujar Cuadrados</button>
-        <button onclick="drawMode = 'rectangle';">Dibujar Rectangulos</button>
+        <button onclick="drawMode = 'line';" title="Linea Recta"><img src="icons/linear.svg" alt="Linea Recta"></button>
+        <button onclick="drawMode = 'square';" title="Cuadrado"><img src="icons/square.svg" alt="Cuadrado"></button>
+        <button onclick="drawMode = 'rectangle';" title="Rectangulo"><img src="icons/rectangle.svg" alt="Rectangulo"></button>
     </div>
-    <script>
-        let canvas = document.getElementById('canvas');
-        let ctx = canvas.getContext('2d');
-        let isDrawing = false;
-        let startX, startY, mouseX, mouseY;
-        let figures = [];
-        let drawMode = 'line'; // Default mode is drawing lines
-
-        // Bresenham's line algorithm
-        function line(x0, y0, x1, y1, color = 'white') {
-            ctx.strokeStyle = color;
-            let dx = Math.abs(x1 - x0);
-            let dy = Math.abs(y1 - y0);
-            let sx = (x0 < x1) ? 1 : -1;
-            let sy = (y0 < y1) ? 1 : -1;
-            let err = dx - dy;
-
-            while (true) {
-                setPixel(x0, y0, color);
-                if (x0 === x1 && y0 === y1) break;
-                let e2 = 2 * err;
-                if (e2 > -dy) {
-                    err -= dy;
-                    x0 += sx;
-                }
-                if (e2 < dx) {
-                    err += dx;
-                    y0 += sy;
-                }
-            }
-        }
-
-        // Draw square using lines
-        function square(x0, y0, length, xSign, ySign, color = 'white') {
-            let x1 = x0 + length * xSign;
-            let y1 = y0 + length * ySign;
-
-            line(x0, y0, x1, y0, color); // Top line
-            line(x1, y0, x1, y1, color); // Right line
-            line(x1, y1, x0, y1, color); // Bottom line
-            line(x0, y1, x0, y0, color); // Left line
-        }
-        
-        function rectangle(x0, y0, width, height, color = 'white') {
-            let x1 = x0 + width;
-            let y1 = y0 + height;
-
-            line(x0, y0, x1, y0, color); // Top line
-            line(x1, y0, x1, y1, color); // Right line
-            line(x1, y1, x0, y1, color); // Bottom line
-            line(x0, y1, x0, y0, color); // Left line
-        }
-
-        function setPixel(x, y, color = 'white') {
-            ctx.fillStyle = color;
-            ctx.fillRect(x, y, 1, 1);
-        }
-
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Draw all stored figures
-            for (let i = 0; i < figures.length; i++) {
-                let figure = figures[i];
-                if (figure.type === 'line') {
-                    line(figure.startX, figure.startY, figure.endX, figure.endY);
-                } else if (figure.type === 'square') {
-                    let length = figure.length;
-                    let xSign = figure.xSign;
-                    let ySign = figure.ySign;
-                    square(figure.startX, figure.startY, length, xSign, ySign);
-                } else if (figure.type === 'rectangle') {
-                    let width = figure.width;
-                    let height = figure.height;
-                    rectangle(figure.startX, figure.startY, width, height);
-                }
-            }
-
-            // Draw the current figure being drawn
-            if (isDrawing) {
-                if (drawMode === 'line') {
-                    line(startX, startY, mouseX, mouseY);
-                } else if (drawMode === 'square') {
-                    let lengthX = Math.abs(mouseX - startX);
-                    let lengthY = Math.abs(mouseY - startY);
-                    let length = Math.min(lengthX, lengthY);
-                    let xSign = Math.sign(mouseX - startX);
-                    let ySign = Math.sign(mouseY - startY);
-                    square(startX, startY, length, xSign, ySign);
-                } else if (drawMode === 'rectangle') {
-                    let width = Math.abs(mouseX - startX);
-                    let height = Math.abs(mouseY - startY);
-                    let x = Math.min(mouseX, startX);
-                    let y = Math.min(mouseY, startY);
-                    rectangle(x, y, width, height);
-                }
-            }
-        }
-
-        canvas.addEventListener('mousedown', function (e) {
-            isDrawing = true;
-            startX = e.clientX - canvas.getBoundingClientRect().left;
-            startY = e.clientY - canvas.getBoundingClientRect().top;
-        });
-
-        canvas.addEventListener('mousemove', function (e) {
-            if (!isDrawing) return;
-            mouseX = e.clientX - canvas.getBoundingClientRect().left;
-            mouseY = e.clientY - canvas.getBoundingClientRect().top;
-            draw();
-        });
-
-        canvas.addEventListener('mouseup', function () {
-            if (isDrawing) {
-                isDrawing = false;
-                if (drawMode === 'line') {
-                    figures.push({ type: 'line', startX: startX, startY: startY, endX: mouseX, endY: mouseY });
-                } else if (drawMode === 'square') {
-                    let lengthX = Math.abs(mouseX - startX);
-                    let lengthY = Math.abs(mouseY - startY);
-                    let length = Math.min(lengthX, lengthY);
-                    let xSign = Math.sign(mouseX - startX);
-                    let ySign = Math.sign(mouseY - startY);
-                    figures.push({ type: 'square', startX: startX, startY: startY, length: length, xSign: xSign, ySign: ySign });
-                } else if (drawMode === 'rectangle') {
-                    let width = Math.abs(mouseX - startX);
-                    let height = Math.abs(mouseY - startY);
-                    let x = Math.min(mouseX, startX);
-                    let y = Math.min(mouseY, startY);
-                    figures.push({ type: 'rectangle', startX: x, startY: y, width: width, height: height });
-                }
-            }
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
