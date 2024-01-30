@@ -4,16 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <title>Canvas Drawing</title>
 </head>
 <body>
     <canvas id="canvas" width="800" height="600"></canvas>
-    <div id="buttons">
+    <div id="shapes-buttons">
         <button onclick="drawMode = 'line';" title="Linea Recta"><img src="icons/linear.svg" alt="Linea Recta"></button>
         <button onclick="drawMode = 'square';" title="Cuadrado"><img src="icons/square.svg" alt="Cuadrado"></button>
         <button onclick="drawMode = 'rectangle';" title="Rectangulo"><img src="icons/rectangle.svg" alt="Rectangulo"></button>
+        <button onclick="drawMode = 'circle';" title="Circulo"><img src="icons/circle.svg" alt="Circulo"></button>    
     </div>
+    <div id="color-buttons">
+        <div class="color-row">
+            <button style="background-color: black;" onclick="changeColor('black')"></button>
+            <button style="background-color: gray;" onclick="changeColor('gray')"></button>
+            <button style="background-color: darkred;" onclick="changeColor('darkred')"></button>
+            <button style="background-color: red;" onclick="changeColor('red')"></button>
+            <button style="background-color: orange;" onclick="changeColor('orange')"></button>
+            <button style="background-color: yellow;" onclick="changeColor('yellow')"></button>
+            <button style="background-color: green;" onclick="changeColor('green')"></button>
+            <button style="background-color: turquoise;" onclick="changeColor('turquoise')"></button>
+            <button style="background-color: indigo;" onclick="changeColor('indigo')"></button>
+            <button style="background-color: purple;" onclick="changeColor('purple')"></button>
+        </div>
+        <div class="color-row">
+            <button style="background-color: white;" onclick="changeColor('white')"></button> 
+            <button style="background-color: lightgray;" onclick="changeColor('lightgray')"></button>
+            <button style="background-color: brown;" onclick="changeColor('brown')"></button>
+            <button style="background-color: pink;" onclick="changeColor('pink')"></button>
+            <button style="background-color: gold;" onclick="changeColor('gold')"></button>      
+            <button style="background-color: lightyellow;" onclick="changeColor('lightyellow')"></button>      
+            <button style="background-color: lime;" onclick="changeColor('lime')"></button>      
+            <button style="background-color: lightsteelblue;" onclick="changeColor('lightsteelblue')"></button>      
+            <button style="background-color: teal;" onclick="changeColor('teal')"></button>      
+            <button style="background-color: lavender;" onclick="changeColor('lavender')"></button>      
+
+        </div>
+    </div>
+    
+    
     <script src="script.js"></script>
 </body>
 </html>

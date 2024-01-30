@@ -5,24 +5,46 @@ body {
     background-color: rgb(29, 30, 30);
 }
 
-#buttons {
+#shapes-buttons {
     margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
 }
 
-#buttons button {
-    background-color: rgb(138, 142, 142);;
-    width: 100px; /* Ancho del botón */
-    height: 40px; /* Alto del botón */
-    margin-right: 10px; /* Espacio entre los botones */
-    font-size: 18px; /* Tamaño del texto */
-    position: relative; /* Establece la posición relativa para alinear la imagen */
-    overflow: hidden; /* Oculta el contenido que se desborda del botón */
+#shapes-buttons button {
+    background-color: rgb(227, 234, 234);
+    width: 80px; /* Reducir el ancho del botón */
+    height: 30px; /* Reducir el alto del botón */
+    margin-right: 5px; /* Reducir el espacio entre los botones */
+    margin-bottom: 5px; /* Agregar espacio entre las filas */
+    font-size: 14px; /* Reducir el tamaño del texto */
+    position: relative;
+    overflow: hidden;
 }
 
-#buttons button img {
+#shapes-buttons button img {
     width: 100%; /* Ancho de la imagen al 100% del botón */
     height: 100%; /* Altura de la imagen al 100% del botón */
     position: absolute; /* Establece la posición absoluta para que la imagen llene el botón */
     top: 0; /* Coloca la imagen en la parte superior del botón */
     left: 0; /* Coloca la imagen en la parte izquierda del botón */
+}
+
+.color-row {
+    display: flex;
+}
+
+#color-buttons {
+    margin-top: 10px;
+}
+
+#color-buttons button {
+    background-color: rgb(227, 234, 234);
+    width: 80px;
+    height: 30px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    font-size: 14px;
+    position: relative;
+    overflow: hidden;
 }
