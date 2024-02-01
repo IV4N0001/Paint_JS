@@ -1,6 +1,8 @@
 body {
     background-color: rgb(50, 52, 52);
+    font-family: Fixed, monospace;
 }
+
 #canvas {
     background-color: rgb(29, 30, 30);
 }
@@ -13,33 +15,6 @@ body {
 
 #shapes-buttons button {
     background-color: rgb(227, 234, 234);
-    width: 80px; /* Reducir el ancho del botón */
-    height: 30px; /* Reducir el alto del botón */
-    margin-right: 5px; /* Reducir el espacio entre los botones */
-    margin-bottom: 5px; /* Agregar espacio entre las filas */
-    font-size: 14px; /* Reducir el tamaño del texto */
-    position: relative;
-    overflow: hidden;
-}
-
-#shapes-buttons button img {
-    width: 100%; /* Ancho de la imagen al 100% del botón */
-    height: 100%; /* Altura de la imagen al 100% del botón */
-    position: absolute; /* Establece la posición absoluta para que la imagen llene el botón */
-    top: 0; /* Coloca la imagen en la parte superior del botón */
-    left: 0; /* Coloca la imagen en la parte izquierda del botón */
-}
-
-.color-row {
-    display: flex;
-}
-
-#color-buttons {
-    margin-top: 10px;
-}
-
-#color-buttons button {
-    background-color: rgb(227, 234, 234);
     width: 80px;
     height: 30px;
     margin-right: 5px;
@@ -47,4 +22,54 @@ body {
     font-size: 14px;
     position: relative;
     overflow: hidden;
+}
+
+#shapes-buttons button img {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#color-buttons {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap; /* Agregar envoltura para los botones de colores */
+}
+
+.color-row {
+    display: flex;
+    flex-wrap: wrap; /* Agregar envoltura para los botones de colores */
+}
+
+#color-buttons button {
+    background-color: rgb(227, 234, 234);
+    width: 75px;
+    height: 25px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    font-size: 14px;
+    position: relative;
+    overflow: hidden;
+}
+
+#thickness-select {
+    margin-left: 10px;
+}
+
+#thickness {
+    width: 60px;
+    height: 30px;
+    font-size: 14px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    color: #333;
+    padding: 5px;
+}
+
+#thickness-select label {
+    color: white;
+    margin-right: 5px;
 }

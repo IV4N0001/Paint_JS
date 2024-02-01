@@ -9,10 +9,12 @@
 <body>
     <canvas id="canvas" width="800" height="600"></canvas>
     <div id="shapes-buttons">
+        <button onclick="drawMode = 'pencil';" title="Lapiz"><img src="icons/pencil.svg" alt="Lapiz"></button>
         <button onclick="drawMode = 'line';" title="Linea Recta"><img src="icons/linear.svg" alt="Linea Recta"></button>
         <button onclick="drawMode = 'square';" title="Cuadrado"><img src="icons/square.svg" alt="Cuadrado"></button>
         <button onclick="drawMode = 'rectangle';" title="Rectangulo"><img src="icons/rectangle.svg" alt="Rectangulo"></button>
-        <button onclick="drawMode = 'circle';" title="Circulo"><img src="icons/circle.svg" alt="Circulo"></button>    
+        <button onclick="drawMode = 'circle';" title="Circulo"><img src="icons/circle.svg" alt="Circulo"></button>   
+        <button onclick="drawMode = 'ellipse';" title="Elipse"><img src="icons/ellipse.svg" alt="Ellipse"></button>    
     </div>
     <div id="color-buttons">
         <div class="color-row">
@@ -38,11 +40,17 @@
             <button style="background-color: lightsteelblue;" onclick="changeColor('lightsteelblue')"></button>      
             <button style="background-color: teal;" onclick="changeColor('teal')"></button>      
             <button style="background-color: lavender;" onclick="changeColor('lavender')"></button>      
-
+        </div>
+        <div id="thickness-select">
+            <label for="thickness">Grosor:</label>
+            <select id="thickness" onchange="changeThickness(this.value)">
+                <option value="1">1 px</option>
+                <option value="3">3 px</option>
+                <option value="5">5 px</option>
+                <option value="8">8 px</option>
+            </select>
         </div>
     </div>
-    
-    
     <script src="script.js"></script>
 </body>
 </html>
