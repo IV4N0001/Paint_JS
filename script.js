@@ -7,6 +7,13 @@ let drawMode = 'line'; // Default mode is drawing lines
 let currentColor = 'white';
 let currentThickness = 1;
 let pencilPoints = []; // Array to store pencil points
+let sidesInput = document.getElementById('polygon-sides');
+let sides = parseInt(sidesInput.value);
+
+// Actualiza el número de lados del polígono cuando cambia el input
+sidesInput.addEventListener('input', function() {
+    sides = sidesInput.value;
+});
 
 function changeColor(color) {
     currentColor = color;
@@ -17,18 +24,36 @@ function changeThickness(thickness) {
 }
 
 function pencil(x, y, color = currentColor, thickness = currentThickness) {
-    if (!isDrawing) return; // Salir si no se está dibujando
+    if (!isDrawing) return; // Exit if not drawing
     pencilPoints.push({ x: x, y: y, color: color, thickness: thickness });
-    draw(); // Volver a dibujar en cada movimiento del lápiz
+    draw(); // Redraw on each pencil movement
 }
 
 function line(x0, y0, x1, y1, color = currentColor, thickness = currentThickness) {
     ctx.strokeStyle = color;
-    ctx.lineWidth = thickness;
-    ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x1, y1);
-    ctx.stroke();
+    const dx = Math.abs(x1 - x0);
+    const dy = Math.abs(y1 - y0);
+    const sx = (x0 < x1) ? 1 : -1;
+    const sy = (y0 < y1) ? 1 : -1;
+    let err = dx - dy;
+
+    while (true) {
+        setPixel(x0, y0, color, thickness);
+        if (x0 === x1 && y0 === y1) break;
+        const e2 = 2 * err;
+        if (e2 > -dy) {
+            err -= dy;
+            x0 += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            y0 += sy;
+        }
+        if ((sx > 0 && x0 > x1) || (sx < 0 && x0 < x1) || (sy > 0 && y0 > y1) || (sy < 0 && y0 < y1)) {
+            // Verificar si hemos pasado el punto final
+            return;
+        }
+    }
 }
 
 // Draw square using lines
@@ -124,6 +149,22 @@ function ellipse(x0, y0, x1, y1, color = currentColor, thickness = currentThickn
     } 
 }
 
+function polygone(centerX, centerY, sides, radius, color = currentColor, thickness = currentThickness) {
+    const angleStep = (2 * Math.PI) / sides;
+    let x0 = centerX + radius;
+    let y0 = centerY;
+    let x1, y1;
+    
+    for (let i = 1; i <= sides; i++) {
+        x1 = centerX + radius * Math.cos(i * angleStep);
+        y1 = centerY + radius * Math.sin(i * angleStep);
+        line(x0, y0, x1, y1, color, thickness); // Utiliza el algoritmo de Bresenham para trazar la línea
+        x0 = x1;
+        y0 = y1;
+    }
+}
+
+
 function setPixel(x, y, color = currentColor, thickness = currentThickness) {
     ctx.fillStyle = color;
     ctx.fillRect(x, y, thickness, thickness);
@@ -131,8 +172,7 @@ function setPixel(x, y, color = currentColor, thickness = currentThickness) {
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Dibujar todas las figuras almacenadas
+    // Draw all stored figures
     for (let i = 0; i < figures.length; i++) {
         let figure = figures[i];
         let color = figure.color;
@@ -164,13 +204,16 @@ function draw() {
                 break;
             case 'ellipse':
                 ellipse(figure.x0, figure.y0, figure.x1, figure.y1, color, thickness);
-                break
+                break;
+            case 'polygone':
+                polygone(figure.centerX, figure.centerY, figure.sides, figure.radius, color, thickness);
+                break;
             default:
                 break;
         }
     }
 
-    // Dibujar la figura actual que se está dibujando
+    // Draw the current figure being drawn
     if (isDrawing) {
         let color = currentColor;
         let thickness = currentThickness;
@@ -212,6 +255,10 @@ function draw() {
             case 'ellipse':
                 ellipse(startX, startY, mouseX, mouseY, color, thickness);
                 break;
+            case 'polygone':
+                const radiusPolygone = Math.sqrt(Math.pow(mouseX - startX, 2) + Math.pow(mouseY - startY, 2));
+                polygone(startX, startY, sides, radiusPolygone, color, thickness);
+                break;
             default:
                 break;
         }
@@ -223,10 +270,10 @@ canvas.addEventListener('mousedown', function (e) {
     startX = e.clientX - canvas.getBoundingClientRect().left;
     startY = e.clientY - canvas.getBoundingClientRect().top;
     if (drawMode === 'pencil') {
-        // Limpiar los puntos del lápiz al iniciar un nuevo trazo
+        // Clear pencil points when starting a new stroke
         pencilPoints = [];
         pencilPoints.push({ x: startX, y: startY, thickness: currentThickness });
-        // Agregar la figura inicial al arreglo de figuras
+        // Add initial figure to the figures array
         figures.push({ type: 'pencil', points: pencilPoints, color: currentColor, thickness: currentThickness });
     }
 });
@@ -249,7 +296,7 @@ canvas.addEventListener('mouseup', function () {
         let thickness = currentThickness;
         switch (drawMode) {
             case 'pencil':
-                // No es necesario agregar la figura aquí, ya se agregó en mousedown
+                // No need to add the figure here, it was already added in mousedown
                 break;
             case 'line':
                 figures.push({ type: 'line', startX: startX, startY: startY, endX: mouseX, endY: mouseY, color: color, thickness: thickness });
@@ -275,6 +322,10 @@ canvas.addEventListener('mouseup', function () {
                 break;
             case 'ellipse':
                 figures.push({ type: 'ellipse', x0: startX, y0: startY, x1: mouseX, y1: mouseY, color: color, thickness: thickness });
+                break;
+            case 'polygone':
+                const radiusPolygone = Math.sqrt(Math.pow(mouseX - startX, 2) + Math.pow(mouseY - startY, 2));
+                figures.push({ type: 'polygone', centerX: startX, centerY: startY, sides: sides, radius: radiusPolygone, color: color, thickness: thickness });
                 break;
             default:
                 break;
