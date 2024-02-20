@@ -9,11 +9,33 @@ let currentThickness = 1;
 let pencilPoints = []; // Array to store pencil points
 let sidesInput = document.getElementById('polygon-sides');
 let sides = parseInt(sidesInput.value);
+let undoButton = document.getElementById('undoButton');
+let redoButton = document.getElementById('redoButton');
+let undoStack = [];
+let redoStack = [];
 
 // Actualiza el número de lados del polígono cuando cambia el input
 sidesInput.addEventListener('input', function() {
     sides = sidesInput.value;
 });
+
+undoButton.addEventListener('click', function() {
+    if (figures.length > 0) {
+        let lastFigure = figures.pop();
+        undoStack.push(lastFigure);
+        draw();
+    }
+});
+
+redoButton.addEventListener('click', function() {
+    if (undoStack.length > 0) {
+        let lastUndoneFigure = undoStack.pop();
+        redoStack.push(lastUndoneFigure);
+        figures.push(lastUndoneFigure);
+        draw();
+    }
+});
+
 
 function changeColor(color) {
     currentColor = color;
