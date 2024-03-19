@@ -15,7 +15,9 @@
         <button onclick="drawMode = 'rectangle';" title="Rectangulo"><img src="icons/rectangle.svg" alt="Rectangulo"></button>
         <button onclick="drawMode = 'circle';" title="Circulo"><img src="icons/circle.svg" alt="Circulo"></button>   
         <button onclick="drawMode = 'ellipse';" title="Elipse"><img src="icons/ellipse.svg" alt="Elipse"></button>
-        <button onclick="drawMode = 'polygone';" title="Poligono Regular"><img src="icons/polygon.svg" alt="Poligono Regular"></button>    
+        <button onclick="drawMode = 'rhombus';" title="Rombo"><img src="icons/rhombus.svg" alt="Rombo"></button>   
+        <button onclick="drawMode = 'trapezoid';" title="Trapecio"><img src="icons/trapezoid.svg" alt="Trapecio"></button> 
+        <button onclick="drawMode = 'polygone';" title="Poligono Regular"><img src="icons/polygon.svg" alt="Poligono Regular"></button>   
         <input id="polygon-sides" placeholder="Lados">
     </div>
     <div id="color-buttons">
@@ -56,6 +58,9 @@
     <div id="undo-redo-buttons">
         <button id="undoButton" title="Retroceder"><img src="icons/arrow-back.svg"></button>
         <button id="redoButton" title="Avanzar"><img src="icons/arrow-next.svg"></button>
+        <button id="hand" title="Agarrar"><img src="icons/hand.svg"></button>
+        <button id="fill" title="Relleno"><img src="icons/paint-bucket.svg"></button>
+        <button id="clear" title="Limpiar canvas" onclick="clearCanvas()"><img src="icons/clear-canvas.svg"></button>
     </div>
     <script src="script.js"></script>
 </body>
