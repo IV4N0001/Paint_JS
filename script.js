@@ -1,5 +1,5 @@
 let canvas = document.getElementById('canvas');
-let ctx = canvas.getContext('2d');
+let ctx = canvas.getContext('2d', { willReadFrequently: true });
 let isDrawing = false;
 let startX, startY, mouseX, mouseY;
 let figures = [];
@@ -19,7 +19,94 @@ let isDragging = false;
 let dragStartX, dragStartY;
 let draggedElementIndex = -1; // Índice del elemento que se está arrastrando
 let handButton = document.getElementById('hand');
+let fillButton = document.getElementById('fill');
 
+fillButton.addEventListener('click', function() {
+    // Cambiar el modo de dibujo a relleno
+    changeDrawMode('fill');
+});
+
+// Agregar evento click al lienzo para manejar el relleno
+canvas.addEventListener('click', function(e) {
+    // Obtener las coordenadas del clic en el lienzo
+    let rect = canvas.getBoundingClientRect(); // Get canvas bounding rect
+    let mouseX = e.clientX - rect.left;
+    let mouseY = e.clientY - rect.top;
+
+    // Verificar si el modo de dibujo es relleno
+    if (drawMode === 'fill') {
+        // Obtener el color seleccionado para el relleno
+        let fillColor = currentColor; // Utiliza el color actual
+        // Llamar a la función de relleno con las coordenadas del clic y el color seleccionado
+        floodFill(mouseX, mouseY, fillColor);
+    }
+});
+
+// Función para el relleno por inundación
+function floodFill(x, y, color) {
+    // Obtener el color del píxel en las coordenadas dadas
+    let targetColor = ctx.getImageData(x, y, 1, 1).data;
+
+    // Verificar si el color de destino es igual al color de relleno
+    if (colorsMatch(targetColor, color)) {
+        return;
+    }
+
+    // Crear una pila para almacenar los píxeles por visitar
+    let stack = [{x: x, y: y}];
+
+    // Función para verificar si dos colores son iguales
+    function colorsMatch(color1, color2) {
+        return color1[0] === color2[0] && color1[1] === color2[1] && color1[2] === color2[2] && color1[3] === color2[3];
+    }
+
+    // Mientras la pila no esté vacía
+    while (stack.length) {
+        let current = stack.pop();
+        let cx = current.x;
+        let cy = current.y;
+
+        // Obtener el color del píxel actual
+        let currentColor = ctx.getImageData(cx, cy, 1, 1).data;
+
+        // Verificar si el color del píxel actual es igual al color de destino
+        if (colorsMatch(currentColor, targetColor)) {
+            // Establecer el color del píxel actual
+            ctx.fillStyle = color;
+
+            // Expandir el relleno horizontalmente hacia la izquierda
+            let leftBound = cx;
+            while (leftBound >= 0 && colorsMatch(ctx.getImageData(leftBound, cy, 1, 1).data, targetColor)) {
+                leftBound--;
+            }
+
+            // Expandir el relleno horizontalmente hacia la derecha
+            let rightBound = cx + 1;
+            while (rightBound < canvas.width && colorsMatch(ctx.getImageData(rightBound, cy, 1, 1).data, targetColor)) {
+                rightBound++;
+            }
+
+            // Rellenar la fila completa con el color
+            ctx.fillRect(leftBound + 1, cy, rightBound - leftBound - 1, 1);
+
+            // Explorar hacia arriba y hacia abajo desde la fila rellenada
+            if (cy > 0) {
+                for (let i = leftBound + 1; i < rightBound; i++) {
+                    if (colorsMatch(ctx.getImageData(i, cy - 1, 1, 1).data, targetColor)) {
+                        stack.push({x: i, y: cy - 1});
+                    }
+                }
+            }
+            if (cy < canvas.height - 1) {
+                for (let i = leftBound + 1; i < rightBound; i++) {
+                    if (colorsMatch(ctx.getImageData(i, cy + 1, 1, 1).data, targetColor)) {
+                        stack.push({x: i, y: cy + 1});
+                    }
+                }
+            }
+        }
+    }
+}
 
 // Agregar evento click al botón de la mano para activar el modo de arrastrar y soltar
 handButton.addEventListener('click', function() {
@@ -228,8 +315,6 @@ function trapezoid(startX, startY, endX, endY, color = currentColor, thickness =
     line(x0, y0, x1, y1, color, thickness); // Línea AB
 }
 
-
-
 function setPixel(x, y, color = currentColor, thickness = currentThickness) {
     ctx.fillStyle = color;
     ctx.fillRect(x, y, thickness, thickness);
@@ -383,9 +468,8 @@ canvas.addEventListener('mousedown', function (e) {
             pencilPoints.push({ x: startX, y: startY, thickness: currentThickness });
             // Add initial figure to the figures array
             figures.push({ type: 'pencil', points: pencilPoints, color: currentColor, thickness: currentThickness });
-        }
-        // Aquí puedes agregar lógica para comenzar a dibujar otros tipos de figuras
     }
+}
 });
 
 canvas.addEventListener('mousemove', function (e) {
