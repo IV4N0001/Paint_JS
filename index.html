@@ -10,6 +10,7 @@
     <canvas id="canvas" width="800" height="550"></canvas>
     <div id="shapes-buttons">
         <button onclick="drawMode = 'pencil';" title="Lapiz"><img src="icons/pencil.svg" alt="Lapiz"></button>
+        <button onclick="drawMode = 'eraser';" title="Borrador"><img src="icons/eraser.svg" alt="Borrador"></button>
         <button onclick="drawMode = 'line';" title="Linea Recta"><img src="icons/linear.svg" alt="Linea Recta"></button>
         <button onclick="drawMode = 'square';" title="Cuadrado"><img src="icons/square.svg" alt="Cuadrado"></button>
         <button onclick="drawMode = 'rectangle';" title="Rectangulo"><img src="icons/rectangle.svg" alt="Rectangulo"></button>
@@ -59,10 +60,12 @@
         <button id="undoButton" title="Retroceder"><img src="icons/arrow-back.svg"></button>
         <button id="redoButton" title="Avanzar"><img src="icons/arrow-next.svg"></button>
         <button id="hand" title="Agarrar"><img src="icons/hand.svg"></button>
-        <button id="size" title="Redimensionar"><img src="icons/size.svg"></button>
-        <button id="rotate" title="Rotar"><img src="icons/rotate.svg"></button>
+        <!--<button id="scale" title="Redimensionar"><img src="icons/size.svg"></button>-->
+        <!--<button id="rotate" title="Rotar"><img src="icons/rotate.svg"></button>-->
         <button id="fill" title="Relleno"><img src="icons/paint-bucket.svg"></button>
         <button id="clear" title="Limpiar canvas" onclick="clearCanvas()"><img src="icons/clear-canvas.svg"></button>
+        <button id="png" title="Guardar canvas como PNG" onclick="saveAsPNG()"><img src="icons/png.svg"></button>
+        <input type="text" id="namePNG" placeholder="Nombre del archivo">
     </div>
     <script src="script.js"></script>
 </body>

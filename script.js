@@ -3,10 +3,12 @@ let ctx = canvas.getContext('2d', { willReadFrequently: true });
 let isDrawing = false;
 let startX, startY, mouseX, mouseY;
 let figures = [];
-let drawMode = 'line'; // Default mode is drawing lines
+let drawMode = 'line';
 let currentColor = 'white';
 let currentThickness = 1;
-let pencilPoints = []; // Array to store pencil points
+let pencilPoints = [];
+let eraserPoints = []; 
+let eraserColor = 'rgb(29, 30, 30)';
 let sidesInput = document.getElementById('polygon-sides');
 let sides = parseInt(sidesInput.value);
 let undoButton = document.getElementById('undoButton');
@@ -20,6 +22,18 @@ let dragStartX, dragStartY;
 let draggedElementIndex = -1; // Índice del elemento que se está arrastrando
 let handButton = document.getElementById('hand');
 let fillButton = document.getElementById('fill');
+
+function saveAsPNG() {
+    let nameFile = document.getElementById('namePNG').value;
+    // Obtener la URL de la imagen del canvas
+    var imgURL = canvas.toDataURL('image/png');
+
+    // Crear un enlace temporal para descargar la imagen
+    var link = document.createElement('a');
+    link.href = imgURL;
+    link.download = nameFile + '.png'; // Nombre de archivo a descargar
+    link.click();
+}
 
 fillButton.addEventListener('click', function() {
     // Cambiar el modo de dibujo a relleno
@@ -60,52 +74,58 @@ function floodFill(x, y, color) {
         return color1[0] === color2[0] && color1[1] === color2[1] && color1[2] === color2[2] && color1[3] === color2[3];
     }
 
-    // Mientras la pila no esté vacía
-    while (stack.length) {
-        let current = stack.pop();
-        let cx = current.x;
-        let cy = current.y;
+    // Lógica de relleno
+    function fill() {
+        // Mientras la pila no esté vacía
+        while (stack.length) {
+            let current = stack.pop();
+            let cx = current.x;
+            let cy = current.y;
 
-        // Obtener el color del píxel actual
-        let currentColor = ctx.getImageData(cx, cy, 1, 1).data;
+            // Obtener el color del píxel actual
+            let currentColor = ctx.getImageData(cx, cy, 1, 1).data;
 
-        // Verificar si el color del píxel actual es igual al color de destino
-        if (colorsMatch(currentColor, targetColor)) {
-            // Establecer el color del píxel actual
-            ctx.fillStyle = color;
+            // Verificar si el color del píxel actual es igual al color de destino
+            if (colorsMatch(currentColor, targetColor)) {
+                // Establecer el color del píxel actual
+                ctx.fillStyle = color;
 
-            // Expandir el relleno horizontalmente hacia la izquierda
-            let leftBound = cx;
-            while (leftBound >= 0 && colorsMatch(ctx.getImageData(leftBound, cy, 1, 1).data, targetColor)) {
-                leftBound--;
-            }
+                // Expandir el relleno horizontalmente hacia la izquierda
+                let leftBound = cx;
+                while (leftBound >= 0 && colorsMatch(ctx.getImageData(leftBound, cy, 1, 1).data, targetColor)) {
+                    leftBound--;
+                }
 
-            // Expandir el relleno horizontalmente hacia la derecha
-            let rightBound = cx + 1;
-            while (rightBound < canvas.width && colorsMatch(ctx.getImageData(rightBound, cy, 1, 1).data, targetColor)) {
-                rightBound++;
-            }
+                // Expandir el relleno horizontalmente hacia la derecha
+                let rightBound = cx + 1;
+                while (rightBound < canvas.width && colorsMatch(ctx.getImageData(rightBound, cy, 1, 1).data, targetColor)) {
+                    rightBound++;
+                }
 
-            // Rellenar la fila completa con el color
-            ctx.fillRect(leftBound + 1, cy, rightBound - leftBound - 1, 1);
+                // Rellenar la fila completa con el color
+                ctx.fillRect(leftBound + 1, cy, rightBound - leftBound - 1, 1);
 
-            // Explorar hacia arriba y hacia abajo desde la fila rellenada
-            if (cy > 0) {
-                for (let i = leftBound + 1; i < rightBound; i++) {
-                    if (colorsMatch(ctx.getImageData(i, cy - 1, 1, 1).data, targetColor)) {
-                        stack.push({x: i, y: cy - 1});
+                // Explorar hacia arriba y hacia abajo desde la fila rellenada
+                if (cy > 0) {
+                    for (let i = leftBound + 1; i < rightBound; i++) {
+                        if (colorsMatch(ctx.getImageData(i, cy - 1, 1, 1).data, targetColor)) {
+                            stack.push({x: i, y: cy - 1});
+                        }
                     }
                 }
-            }
-            if (cy < canvas.height - 1) {
-                for (let i = leftBound + 1; i < rightBound; i++) {
-                    if (colorsMatch(ctx.getImageData(i, cy + 1, 1, 1).data, targetColor)) {
-                        stack.push({x: i, y: cy + 1});
+                if (cy < canvas.height - 1) {
+                    for (let i = leftBound + 1; i < rightBound; i++) {
+                        if (colorsMatch(ctx.getImageData(i, cy + 1, 1, 1).data, targetColor)) {
+                            stack.push({x: i, y: cy + 1});
+                        }
                     }
                 }
             }
         }
     }
+
+    // Llamar a la función de relleno
+    fill();
 }
 
 // Agregar evento click al botón de la mano para activar el modo de arrastrar y soltar
@@ -135,7 +155,6 @@ redoButton.addEventListener('click', function() {
     }
 });
 
-
 function changeColor(color) {
     currentColor = color;
 }
@@ -147,6 +166,12 @@ function changeThickness(thickness) {
 function pencil(x, y, color = currentColor, thickness = currentThickness) {
     if (!isDrawing) return; // Exit if not drawing
     pencilPoints.push({ x: x, y: y, color: color, thickness: thickness });
+    draw(); // Redraw on each pencil movement
+}
+
+function eraser(x, y, color = eraserColor, thickness = currentThickness) {
+    if (!isDrawing) return; // Exit if not drawing
+    eraserPoints.push({ x: x, y: y, color: color, thickness: thickness });
     draw(); // Redraw on each pencil movement
 }
 
@@ -227,43 +252,43 @@ function circle(xc, yc, x, y, color, thickness) {
 function ellipse(x0, y0, x1, y1, color = currentColor, thickness = currentThickness) {
     let a = Math.abs(x1 - x0);
     let b = Math.abs(y1 - y0);
-    let b1 = b & 1; // values of diameter
+    let b1 = b & 1; // valores del diametro
     let dx = 4 * (1 - a) * b * b;
-    let dy = 4 * (b1 + 1) * a * a; // error increment
+    let dy = 4 * (b1 + 1) * a * a; // incremento de error
     let err = dx + dy + b1 * a * a;
-    let e2; // error of 1.step
+    let e2; // error del paso 1
 
     if (x0 > x1) {
         x0 = x1;
         x1 += a;
-    } // if called with swapped points
+    } // si se llama con puntos intercambiados
 
-    if (y0 > y1) y0 = y1; // .. exchange them
+    if (y0 > y1) y0 = y1; // .. intercambiarlos
     y0 += (b + 1) / 2;
-    y1 = y0 - b1; // starting pixel
+    y1 = y0 - b1; // pixel inicial
     a *= 8 * a;
     b1 = 8 * b * b;
 
     do {
-        setPixel(x1, y0, color, thickness); //   I. Quadrant 
-        setPixel(x0, y0, color, thickness); //  II. Quadrant 
-        setPixel(x0, y1, color, thickness); // III. Quadrant 
-        setPixel(x1, y1, color, thickness); //  IV. Quadrant 
+        setPixel(x1, y0, color, thickness); //   I. cuadrante 
+        setPixel(x0, y0, color, thickness); //  II. cuadrante 
+        setPixel(x0, y1, color, thickness); // III. cuadrante 
+        setPixel(x1, y1, color, thickness); //  IV. cuadrante 
         e2 = 2 * err;
         if (e2 <= dy) {
             y0++;
             y1--;
             err += dy += a;
-        } // y step 
+        } // paso y 
         if (e2 >= dx || 2 * err > dy) {
             x0++;
             x1--;
             err += dx += b1;
-        } // x step 
+        } // paso x
     } while (x0 <= x1);
 
     while (y0 - y1 < b) {
-        setPixel(x0 - 1, y0, color, thickness); // -> finish tip of ellipse 
+        setPixel(x0 - 1, y0, color, thickness); // -> terminar la punta de la elipse
         setPixel(x1 + 1, y0++, color, thickness);
         setPixel(x0 - 1, y1, color, thickness);
         setPixel(x1 + 1, y1--, color, thickness);
@@ -289,10 +314,10 @@ function rhombus(x0, y0, x1, y1, color = currentColor, thickness = currentThickn
     const midX = (x0 + x1) / 2;
     const midY = (y0 + y1) / 2;
 
-    line(midX, y0, x1, midY, color, thickness); // Top side
-    line(x1, midY, midX, y1, color, thickness); // Right side
-    line(midX, y1, x0, midY, color, thickness); // Bottom side
-    line(x0, midY, midX, y0, color, thickness); // Left side
+    line(midX, y0, x1, midY, color, thickness); // lado de arriba
+    line(x1, midY, midX, y1, color, thickness); // lado de la derecha
+    line(midX, y1, x0, midY, color, thickness); // lado del fondo
+    line(x0, midY, midX, y0, color, thickness); // lado izquierdo
 }
 
 function trapezoid(startX, startY, endX, endY, color = currentColor, thickness = currentThickness) {
@@ -323,13 +348,24 @@ function setPixel(x, y, color = currentColor, thickness = currentThickness) {
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw all stored figures
+    // Dibuja todas las figuras almacenadas
     for (let i = 0; i < figures.length; i++) {
         let figure = figures[i];
         let color = figure.color;
         let thickness = figure.thickness;
 
         switch (figure.type) {
+            case 'eraser':
+                const pointsEraser = figure.points;
+                ctx.strokeStyle = eraserColor;
+                ctx.lineWidth = thickness;
+                ctx.beginPath();
+                ctx.moveTo(pointsEraser[0].x, pointsEraser[0].y);
+                for (let j = 1; j < pointsEraser.length; j++) {
+                    ctx.lineTo(pointsEraser[j].x, pointsEraser[j].y);
+                }
+                ctx.stroke();
+                break;
             case 'pencil':
                 const points = figure.points;
                 ctx.strokeStyle = color;
@@ -370,11 +406,23 @@ function draw() {
         }
     }
 
-    // Draw the current figure being drawn
+    // Dibuja la figura que actualmente se esta dibujando valgame la redundancia
     if (isDrawing) {
         let color = currentColor;
         let thickness = currentThickness;
         switch (drawMode) {
+            case 'eraser':
+                if (eraserPoints.length > 1) {
+                    ctx.strokeStyle = eraserColor;
+                    ctx.lineWidth = thickness;
+                    ctx.beginPath();
+                    ctx.moveTo(eraserPoints[0].x, eraserPoints[0].y);
+                    for (let i = 1; i < eraserPoints.length; i++) {
+                        ctx.lineTo(eraserPoints[i].x, eraserPoints[i].y);
+                    }
+                    ctx.stroke();
+                }
+                break;
             case 'pencil':
                 if (pencilPoints.length > 1) {
                     ctx.strokeStyle = color;
@@ -426,25 +474,25 @@ function draw() {
             case 'trapezoid':
                 const baseWidth = Math.abs(mouseX - startX);
                 const height_ = Math.abs(mouseY - startY);
-                const x_0 = Math.min(mouseX, startX); // Top-left corner X coordinate
-                const y_0 = Math.min(mouseY, startY); // Top-left corner Y coordinate
-                const x1 = x_0 + baseWidth; // Bottom-right corner X coordinate
-                const y1 = y_0 + height_; // Bottom-right corner Y coordinate
+                const x_0 = Math.min(mouseX, startX);
+                const y_0 = Math.min(mouseY, startY); 
+                const x1 = x_0 + baseWidth; 
+                const y1 = y_0 + height_; 
                 trapezoid(x_0, y_0, x1, y1, color, thickness);
                 break;
             default:
                 break;
         }
     }
-}
 
+}
 
 canvas.addEventListener('mousedown', function (e) {
     mouseX = e.clientX - canvas.getBoundingClientRect().left;
     mouseY = e.clientY - canvas.getBoundingClientRect().top;
 
-    // Check if the user clicked close to any existing element to initiate dragging
-    draggedElementIndex = -1; // Reset dragged element index
+    // Revisa si se dio click en un elemento cercano para iniciar el arrastre
+    draggedElementIndex = -1; // Resetear index del elemento a arrastrar
     for (let i = figures.length - 1; i >= 0; i--) {
         if (isPointCloseToElement(mouseX, mouseY, figures[i])) {
             draggedElementIndex = i;
@@ -452,8 +500,8 @@ canvas.addEventListener('mousedown', function (e) {
         }
     }
 
-    // If a close element is found, start dragging
-    if (draggedElementIndex !== -1) {
+    // Si hay un elemento cerca que arrastre
+    if (draggedElementIndex !== -1 ) {
         isDragging = true;
         dragStartX = mouseX;
         dragStartY = mouseY;
@@ -463,13 +511,15 @@ canvas.addEventListener('mousedown', function (e) {
         startX = mouseX;
         startY = mouseY;
         if (drawMode === 'pencil') {
-            // Clear pencil points when starting a new stroke
             pencilPoints = [];
             pencilPoints.push({ x: startX, y: startY, thickness: currentThickness });
-            // Add initial figure to the figures array
             figures.push({ type: 'pencil', points: pencilPoints, color: currentColor, thickness: currentThickness });
+        } else if (drawMode === 'eraser') {
+            eraserPoints = [];
+            eraserPoints.push({ x: startX, y: startY, thickness: currentThickness });
+            figures.push({ type: 'eraser', points: eraserPoints, color: eraserColor, thickness: currentThickness });
+        }
     }
-}
 });
 
 canvas.addEventListener('mousemove', function (e) {
@@ -477,16 +527,15 @@ canvas.addEventListener('mousemove', function (e) {
     mouseY = e.clientY - canvas.getBoundingClientRect().top;
 
     if (isDragging) {
-        // Calculate the difference in position since the start of dragging
+        // Calcula la diferencia de la posición desde que empezo el arrastre
         const deltaX = mouseX - dragStartX;
         const deltaY = mouseY - dragStartY;
 
-        // Update the coordinates of the dragged element
+        // Actualiza coordenadas del elemento
         const draggedElement = figures[draggedElementIndex];
         if (draggedElement) {
             switch (draggedElement.type) {
                 case 'pencil':
-                    // Update each point of the pencil
                     for (let i = 0; i < draggedElement.points.length; i++) {
                         draggedElement.points[i].x += deltaX;
                         draggedElement.points[i].y += deltaY;
@@ -499,7 +548,6 @@ canvas.addEventListener('mousemove', function (e) {
                     draggedElement.endY += deltaY;
                     break;
                 case 'square':
-                    // Update all points defining the square
                     draggedElement.startX += deltaX;
                     draggedElement.startY += deltaY;
                     draggedElement.endX += deltaX;
@@ -522,7 +570,6 @@ canvas.addEventListener('mousemove', function (e) {
                     draggedElement.y1 += deltaY;
                     break;
                 case 'polygone':
-                    // Update the center coordinates of the polygon
                     draggedElement.centerX += deltaX;
                     draggedElement.centerY += deltaY;
                     break;
@@ -543,15 +590,19 @@ canvas.addEventListener('mousemove', function (e) {
             }
         }
 
-        // Redraw the canvas with the dragged element
+        // Redibuja el canvas con los elementos arrastrados
         draw();
 
-        // Update the start coordinates of the drag operation
         dragStartX = mouseX;
         dragStartY = mouseY;
     } else if (isDrawing) {
-        // Handle drawing logic if needed
-        draw();
+        if (drawMode === 'pencil') {
+            pencil(mouseX, mouseY);
+        } else if (drawMode === 'eraser') {
+            eraser(mouseX, mouseY);
+        } else {
+            draw();
+        }
     }
 });
 
@@ -646,14 +697,12 @@ function isPointCloseToLine(x, y, line) {
 function isPointCloseToSquare(x, y, square) {
     const { startX, startY, length } = square;
 
-    // Calculate distances from the click point to each side of the square
     const distLeft = Math.abs(x - startX);
     const distRight = Math.abs(x - (startX + length));
     const distTop = Math.abs(y - startY);
     const distBottom = Math.abs(y - (startY + length));
 
-    // Check if the click is close to any side of the square
-    const margin = 5; // Adjust this value for sensitivity
+    const margin = 5;
     return (
         (distLeft <= margin || distRight <= margin) && y >= startY && y <= startY + length ||
         (distTop <= margin || distBottom <= margin) && x >= startX && x <= startX + length
@@ -696,7 +745,7 @@ function isPointCloseToPolygone(x, y, polygone) {
         y0 = y1;
     }
 
-    return minDistance <= 5; // Adjust this threshold as needed
+    return minDistance <= 5;
 }
 
 function distanceToSegment(x, y, x0, y0, x1, y1) {
@@ -715,7 +764,6 @@ function distanceToSegment(x, y, x0, y0, x1, y1) {
 function isPointCloseToRhombus(x, y, rhombus) {
     const { startX, startY, endX, endY } = rhombus;
 
-    // Define the rhombus as four lines
     const lines = [
         { x1: startX, y1: (startY + endY) / 2, x2: (startX + endX) / 2, y2: endY },
         { x1: (startX + endX) / 2, y1: endY, x2: endX, y2: (startY + endY) / 2 },
@@ -723,7 +771,7 @@ function isPointCloseToRhombus(x, y, rhombus) {
         { x1: (startX + endX) / 2, y1: startY, x2: startX, y2: (startY + endY) / 2 }
     ];
 
-    // Use the point-in-polygon algorithm to check if the point is inside the rhombus
+    // Utiliza el algoritmo de punto en polígono para comprobar si el punto está dentro del rombo
     let inside = false;
     for (let i = 0, j = lines.length - 1; i < lines.length; j = i++) {
         const xi = lines[i].x1, yi = lines[i].y1;
@@ -738,7 +786,6 @@ function isPointCloseToRhombus(x, y, rhombus) {
 function isPointCloseToTrapezoid(x, y, trapezoid) {
     const { startX, startY, endX, endY } = trapezoid;
 
-    // Define the trapezoid as four lines
     const lines = [
         { x1: startX, y1: startY, x2: endX, y2: startY }, // Line AB
         { x1: endX, y1: startY, x2: endX - (endX - startX) * 0.2, y2: endY }, // Line BD
@@ -746,7 +793,6 @@ function isPointCloseToTrapezoid(x, y, trapezoid) {
         { x1: startX + (endX - startX) * 0.2, y1: endY, x2: startX, y2: startY } // Line CA
     ];
 
-    // Check if the point is inside the trapezoid
     let inside = false;
     for (let i = 0, j = lines.length - 1; i < lines.length; j = i++) {
         const xi = lines[i].x1, yi = lines[i].y1;
@@ -770,3 +816,20 @@ function clearCanvas() {
 function changeDrawMode(mode) {
     drawMode = mode;
 }
+
+//Si quieres añadir otra funcionalidad como transformaciones de figuras revisa los eventos mousedown, mousemove, mouseup
+
+//Las ultimas funciones son para verificar si un punto pertenece a una figura y se utiliza en la transformación de arrastre (botón 'hand')
+
+//Todas las funciones para dibujar figuras (excepto circulos, elipses y pencil) llaman a la función 'line' que es una implementación 
+//del algoritmo de bresenham para dibujar lineas rectas
+
+//Todo lo que se dibuje en el canvas va al arreglo Figures
+
+//El borrador (eraser) es una mexicanada que no sirve, solo raya a mano libre pero del mismo color del canvas.
+
+//La función floodFill es una mala implementación del algoritmo de relleno de inundación pero tiene detalles, 
+//es lento porque consume muchos recursos y no almacena los pixeles de la region rellenada, de modo que si 
+//mueves una figura con relleno este se elimina
+
+//Autores: IV4N0001 - ChatGPT. 20/03/2024 - 07:57
