@@ -832,4 +832,4 @@ function changeDrawMode(mode) {
 //es lento porque consume muchos recursos y no almacena los pixeles de la region rellenada, de modo que si 
 //mueves una figura con relleno este se elimina
 
-//Autores: IV4N0001 - ChatGPT. 20/03/2024 - 07:58 P.M.
+//Autores de este monstruo spaghetti: IV4N0001 - ChatGPT. 20/03/2024 - 07:59 P.M.
