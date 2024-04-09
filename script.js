@@ -1299,8 +1299,14 @@ function changeDrawMode(mode) {
 //Autores de este monstruo spaghetti: IV4N0001 - ChatGPT. 20/03/2024 - 07:59 P.M.
 
 //Actualización: 08/04/2024 
+
 //Ahora tiene la transformación de escalado, la unica figura que tiene la transformación de rotación es la linea recta (gira en torno al punto inicial)
 //tal vez el problema por el que no se pueden rotar el resto de figuras es porque en mi estructura de datos no almaceno todos los vertices de las figuras,
 //solo los necesarios para dibujar la figura
 
 //Ahora tiene previsualización del canvas, acomodo de figuras por capas y guardar datos del canvas y abrirlos en formato JSON.
+
+//El acomodo por capas funciona raro, primero tienes que seleccionar uno de los 4 botones referentes a las capas para cambiar el modo de dibujo a 'layers',
+//luego dar doble click en la figura a reacomodar y luego otra vez a uno de los botones de las capas
+
+//Basicamente solo reordena los elementos del arreglo 'figures' para que al dibujarse el canvas superponga o anteponga la figura seleccionada sobre otras.
