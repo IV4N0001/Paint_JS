@@ -23,6 +23,123 @@ let draggedElementIndex = -1; // Índice del elemento que se está arrastrando
 let handButton = document.getElementById('hand');
 let fillButton = document.getElementById('fill');
 
+//Variables para el estado de escalado
+let isScalating = false;
+let originalWidth = 0;
+let originalHeight = 0;
+let scalingElementIndex = 0;
+let scaleButton = document.getElementById('scale');
+
+//Variables para el estado de rotado
+let isRotating = false;
+let rotateButton = document.getElementById('rotate');
+
+//Capas del canvas
+let selectedFigureIndex = -1; // Variable para almacenar el índice de la figura seleccionada
+let isChangingLayer = false; // Bandera para controlar si se está cambiando la capa de una figura
+const layerLowerButton = document.getElementById('layerLower');
+const layerRaiseButton = document.getElementById('layerRaise');
+const layerBottomButton = document.getElementById('layerBottom');
+const layerTopButton = document.getElementById('layerTop');
+
+// Evento para subir una figura en capas
+layerRaiseButton.addEventListener('click', function() {
+    if (selectedFigureIndex !== -1) {
+        isChangingLayer = true;
+        changeDrawMode('layers');
+        moveFigureUp(selectedFigureIndex);
+        draw();
+    }
+});
+
+// Evento para bajar una figura en capas
+layerLowerButton.addEventListener('click', function() {
+    if (selectedFigureIndex !== -1) {
+        isChangingLayer = true;
+        changeDrawMode('layers');
+        moveFigureDown(selectedFigureIndex);
+        draw();
+    }
+});
+
+// Evento para subir una figura en capas
+layerBottomButton.addEventListener('click', function() {
+    if (selectedFigureIndex !== -1) {
+        isChangingLayer = true;
+        changeDrawMode('layers');
+        moveFigureToBottom(selectedFigureIndex);
+        draw();
+    }
+});
+
+// Evento para bajar una figura en capas
+layerTopButton.addEventListener('click', function() {
+    if (selectedFigureIndex !== -1) {
+        isChangingLayer = true;
+        changeDrawMode('layers');
+        moveFigureToTop(selectedFigureIndex);
+        draw();
+    }
+});
+// Función para subir una figura en capas
+function moveFigureUp(index) {
+    if (index < figures.length - 1) {
+        const temp = figures[index];
+        figures[index] = figures[index + 1];
+        figures[index + 1] = temp;
+    }
+}
+
+// Función para bajar una figura en capas
+function moveFigureDown(index) {
+    if (index > 0) {
+        const temp = figures[index];
+        figures[index] = figures[index - 1];
+        figures[index - 1] = temp;
+    }
+}
+
+// Función para mover una figura hasta la parte superior de la pila
+function moveFigureToTop(index) {
+    const temp = figures.splice(index, 1);
+    figures.push(temp[0]);
+}
+
+// Función para mover una figura hasta la parte inferior de la pila
+function moveFigureToBottom(index) {
+    const temp = figures.splice(index, 1);
+    figures.unshift(temp[0]);
+}
+
+// Agregar evento click al lienzo para manejar el relleno y el cambio de capas
+canvas.addEventListener('click', function(e) {
+    // Obtener las coordenadas del clic en el lienzo
+    let rect = canvas.getBoundingClientRect(); // Obtener el rectángulo del canvas
+    let mouseX = e.clientX - rect.left;
+    let mouseY = e.clientY - rect.top;
+
+    // Verificar si se está en modo de dibujo de relleno
+    if (drawMode === 'fill') {
+        // Obtener el color seleccionado para el relleno
+        let fillColor = currentColor; // Utilizar el color actual
+        // Llamar a la función de relleno con las coordenadas del clic y el color seleccionado
+        floodFill(mouseX, mouseY, fillColor);
+    } else if (isChangingLayer) {
+        isChangingLayer = false; // Restablecer la bandera
+    } else {
+        // Si no está en modo de dibujo de relleno, verificar si se hizo clic en una figura para cambiar su capa
+        for (let i = figures.length - 1; i >= 0; i--) {
+            if (isPointCloseToElement(mouseX, mouseY, figures[i])) {
+                // Si se hace clic en una figura, seleccionarla y actualizar su índice en el arreglo
+                selectedFigureIndex = i;
+                break;
+            }
+        }
+    }
+    console.log(figures)
+
+});
+
 function saveAsPNG() {
     let nameFile = document.getElementById('namePNG').value;
     // Obtener la URL de la imagen del canvas
@@ -35,28 +152,109 @@ function saveAsPNG() {
     link.click();
 }
 
+function previewCanvas() {
+    let imagen = document.createElement('img');
+    imagen.src = canvas.toDataURL();
+    let ventanaPrevisualizada = window.open();
+    ventanaPrevisualizada.document.write('<html><head><title>Previsualización</title></head><body></body></html>');
+    ventanaPrevisualizada.document.body.style.backgroundColor = '#1D1E1E'; // Cambia '#000000' al color de fondo deseado
+    ventanaPrevisualizada.document.body.appendChild(imagen);
+}
+
+function saveAsPDF() {
+    // Obtener las dimensiones del canvas
+    let canvasWidth = canvas.width;
+    let canvasHeight = canvas.height;
+
+    // Crear un nuevo PDF con las dimensiones del canvas
+    let pdf = new jsPDF('landscape', 'px', [canvasWidth, canvasHeight]);
+
+    // Convertir el canvas a una imagen
+    let imgData = canvas.toDataURL('image/png');
+
+    // Calcular el ancho y alto del canvas en el PDF
+    let pdfWidth = pdf.internal.pageSize.getWidth();
+    let pdfHeight = pdf.internal.pageSize.getHeight();
+    let ratio = Math.min(pdfWidth / canvasWidth, pdfHeight / canvasHeight);
+    let imgWidth = canvasWidth * ratio;
+    let imgHeight = canvasHeight * ratio;
+
+    // Calcular la posición para centrar la imagen en el PDF
+    let offsetX = (pdfWidth - imgWidth) / 2;
+    let offsetY = (pdfHeight - imgHeight) / 2;
+
+    // Agregar un rectángulo con el mismo color de fondo que el canvas
+    pdf.setFillColor('#1D1E1E'); // Cambia '#000000' al color de fondo deseado
+    pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
+
+    // Agregar la imagen al PDF con la posición y el tamaño adecuados
+    pdf.addImage(imgData, 'PNG', offsetX, offsetY, imgWidth, imgHeight);
+
+    // Guardar el PDF
+    pdf.save('canvas.pdf');
+}
+
+function saveData() {
+    // Convertir el arreglo de figuras a JSON con formato
+    const jsonData = JSON.stringify(figures, null, 2);
+
+    // Crear un objeto Blob con el JSON
+    const blob = new Blob([jsonData], { type: 'application/json' });
+
+    // Crear un enlace para descargar el archivo JSON
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'canvas_data.json';
+
+    // Simular un clic en el enlace para iniciar la descarga
+    document.body.appendChild(a);
+    a.click();
+
+    // Limpiar el enlace y liberar la URL del objeto Blob
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Obtener referencia al elemento de entrada de archivo
+const fileInput = document.getElementById('fileInput');
+
+// Escuchar el evento click en el botón de abrir data
+document.getElementById('openData').addEventListener('click', function() {
+    // Simular un clic en el elemento de entrada de archivo
+    fileInput.click();
+});
+
+// Manejar el cambio en el elemento de entrada de archivo
+fileInput.addEventListener('change', function() {
+    const file = fileInput.files[0]; // Obtener el archivo seleccionado
+
+    if (file) {
+        const reader = new FileReader();
+
+        // Manejar el evento de carga del archivo
+        reader.onload = function(event) {
+            const contents = event.target.result; // Obtener el contenido del archivo
+            const jsonData = JSON.parse(contents); // Convertir el contenido a objeto JSON
+
+            // Reemplazar el contenido de figures con el contenido del archivo JSON
+            figures = jsonData;
+
+            // Redibujar las figuras
+            draw();
+        };
+
+        // Leer el contenido del archivo como texto
+        reader.readAsText(file);
+    }
+});
+
+
 fillButton.addEventListener('click', function() {
     // Cambiar el modo de dibujo a relleno
     changeDrawMode('fill');
 });
 
-// Agregar evento click al lienzo para manejar el relleno
-canvas.addEventListener('click', function(e) {
-    // Obtener las coordenadas del clic en el lienzo
-    let rect = canvas.getBoundingClientRect(); // Get canvas bounding rect
-    let mouseX = e.clientX - rect.left;
-    let mouseY = e.clientY - rect.top;
-
-    // Verificar si el modo de dibujo es relleno
-    if (drawMode === 'fill') {
-        // Obtener el color seleccionado para el relleno
-        let fillColor = currentColor; // Utiliza el color actual
-        // Llamar a la función de relleno con las coordenadas del clic y el color seleccionado
-        floodFill(mouseX, mouseY, fillColor);
-    }
-});
-
-// Función para el relleno por inundación
 function floodFill(x, y, color) {
     // Obtener el color del píxel en las coordenadas dadas
     let targetColor = ctx.getImageData(x, y, 1, 1).data;
@@ -66,8 +264,8 @@ function floodFill(x, y, color) {
         return;
     }
 
-    // Crear una pila para almacenar los píxeles por visitar
-    let stack = [{x: x, y: y}];
+    // Crear una cola para almacenar los píxeles por visitar
+    let queue = [{ x: x, y: y }];
 
     // Función para verificar si dos colores son iguales
     function colorsMatch(color1, color2) {
@@ -75,62 +273,65 @@ function floodFill(x, y, color) {
     }
 
     // Lógica de relleno
-    function fill() {
-        // Mientras la pila no esté vacía
-        while (stack.length) {
-            let current = stack.pop();
-            let cx = current.x;
-            let cy = current.y;
+    while (queue.length > 0) {
+        let current = queue.shift();
+        let cx = current.x;
+        let cy = current.y;
 
-            // Obtener el color del píxel actual
-            let currentColor = ctx.getImageData(cx, cy, 1, 1).data;
+        // Obtener el color del píxel actual
+        let currentColor = ctx.getImageData(cx, cy, 1, 1).data;
 
-            // Verificar si el color del píxel actual es igual al color de destino
-            if (colorsMatch(currentColor, targetColor)) {
-                // Establecer el color del píxel actual
-                ctx.fillStyle = color;
+        // Verificar si el color del píxel actual es igual al color de destino
+        if (colorsMatch(currentColor, targetColor)) {
+            // Establecer el color del píxel actual
+            ctx.fillStyle = color;
 
-                // Expandir el relleno horizontalmente hacia la izquierda
-                let leftBound = cx;
-                while (leftBound >= 0 && colorsMatch(ctx.getImageData(leftBound, cy, 1, 1).data, targetColor)) {
-                    leftBound--;
-                }
+            // Expandir el relleno horizontalmente hacia la izquierda
+            let leftBound = cx;
+            while (leftBound >= 0 && colorsMatch(ctx.getImageData(leftBound, cy, 1, 1).data, targetColor)) {
+                leftBound--;
+            }
 
-                // Expandir el relleno horizontalmente hacia la derecha
-                let rightBound = cx + 1;
-                while (rightBound < canvas.width && colorsMatch(ctx.getImageData(rightBound, cy, 1, 1).data, targetColor)) {
-                    rightBound++;
-                }
+            // Expandir el relleno horizontalmente hacia la derecha
+            let rightBound = cx + 1;
+            while (rightBound < canvas.width && colorsMatch(ctx.getImageData(rightBound, cy, 1, 1).data, targetColor)) {
+                rightBound++;
+            }
 
-                // Rellenar la fila completa con el color
-                ctx.fillRect(leftBound + 1, cy, rightBound - leftBound - 1, 1);
+            // Rellenar la fila completa con el color
+            ctx.fillRect(leftBound + 1, cy, rightBound - leftBound - 1, 1);
 
-                // Explorar hacia arriba y hacia abajo desde la fila rellenada
-                if (cy > 0) {
-                    for (let i = leftBound + 1; i < rightBound; i++) {
-                        if (colorsMatch(ctx.getImageData(i, cy - 1, 1, 1).data, targetColor)) {
-                            stack.push({x: i, y: cy - 1});
-                        }
+            // Explorar hacia arriba y hacia abajo desde la fila rellenada
+            if (cy > 0) {
+                for (let i = leftBound + 1; i < rightBound; i++) {
+                    if (colorsMatch(ctx.getImageData(i, cy - 1, 1, 1).data, targetColor)) {
+                        queue.push({ x: i, y: cy - 1 });
                     }
                 }
-                if (cy < canvas.height - 1) {
-                    for (let i = leftBound + 1; i < rightBound; i++) {
-                        if (colorsMatch(ctx.getImageData(i, cy + 1, 1, 1).data, targetColor)) {
-                            stack.push({x: i, y: cy + 1});
-                        }
+            }
+            if (cy < canvas.height - 1) {
+                for (let i = leftBound + 1; i < rightBound; i++) {
+                    if (colorsMatch(ctx.getImageData(i, cy + 1, 1, 1).data, targetColor)) {
+                        queue.push({ x: i, y: cy + 1 });
                     }
                 }
             }
         }
     }
-
-    // Llamar a la función de relleno
-    fill();
 }
+
 
 // Agregar evento click al botón de la mano para activar el modo de arrastrar y soltar
 handButton.addEventListener('click', function() {
     changeDrawMode('drag');
+});
+
+scaleButton.addEventListener('click', function() {
+    changeDrawMode('scale');
+});
+
+rotateButton.addEventListener('click', function() {
+    changeDrawMode('rotate');
 });
 
 // Actualiza el número de lados del polígono cuando cambia el input
@@ -377,11 +578,16 @@ function draw() {
                 }
                 ctx.stroke();
                 break;
+            case 'text':
+                ctx.fillStyle = color;
+                ctx.font = figure.font;
+                ctx.fillText(figure.text, figure.x, figure.y);
+                break;
             case 'line':
                 line(figure.startX, figure.startY, figure.endX, figure.endY, color, thickness);
                 break;
             case 'square':
-                square(figure.startX, figure.startY, figure.length, figure.xSign, figure.ySign, color, thickness);
+                square(figure.startX, figure.startY, figure.length, figure.endX, figure.endY, color, thickness);
                 break;
             case 'rectangle':
                 rectangle(figure.startX, figure.startY, figure.width, figure.height, color, thickness);
@@ -442,9 +648,9 @@ function draw() {
                 const lengthX = Math.abs(mouseX - startX);
                 const lengthY = Math.abs(mouseY - startY);
                 const length = Math.min(lengthX, lengthY);
-                const xSign = Math.sign(mouseX - startX);
-                const ySign = Math.sign(mouseY - startY);
-                square(startX, startY, length, xSign, ySign, color, thickness);
+                const endX = Math.sign(mouseX - startX);
+                const endY = Math.sign(mouseY - startY);
+                square(startX, startY, length, endX, endY, color, thickness);
                 break;
             case 'rectangle':
                 const width = Math.abs(mouseX - startX);
@@ -484,8 +690,26 @@ function draw() {
                 break;
         }
     }
-
 }
+// Variables para gestionar el texto dinámico
+let textInput = document.createElement('input');
+let textX, textY;
+
+textInput.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        // Verificar si el campo de entrada de texto tiene algún valor
+        if (textInput.value.trim() !== '') {
+            // Agregar el texto ingresado al arreglo de figuras
+            figures.push({ type: 'text', text: textInput.value, x: textX, y: textY, color: currentColor, font: '25px Arial' });
+            // Limpiar el campo de entrada de texto
+            textInput.value = '';
+            // Remover el campo de entrada de texto del DOM
+            textInput.parentNode.removeChild(textInput);
+            // Redibujar el lienzo con el texto agregado
+            draw();
+        }
+    }
+});
 
 canvas.addEventListener('mousedown', function (e) {
     mouseX = e.clientX - canvas.getBoundingClientRect().left;
@@ -500,11 +724,56 @@ canvas.addEventListener('mousedown', function (e) {
         }
     }
 
+    if (drawMode === 'text') {
+        // Si el modo de dibujo es texto, obtener la posición del clic del ratón
+        textX = e.clientX - canvas.getBoundingClientRect().left;
+        textY = e.clientY - canvas.getBoundingClientRect().top;
+
+        // Agregar el elemento de entrada de texto al DOM y posicionarlo en el lienzo
+        textInput.type = 'text';
+        textInput.style.position = 'absolute';
+        textInput.style.left = `${textX}px`;
+        textInput.style.top = `${textY}px`;
+        document.body.appendChild(textInput);
+        textInput.focus();
+    }
+
     // Si hay un elemento cerca que arrastre
-    if (draggedElementIndex !== -1 ) {
+    if (draggedElementIndex !== -1 && drawMode === 'drag') {
         isDragging = true;
         dragStartX = mouseX;
         dragStartY = mouseY;
+    } else if (drawMode === 'scale') {
+        // Iniciar la escala
+        isScalating = true;
+        scalingElementIndex = -1; // Reestablecer el índice del elemento a escalar
+        for (let i = figures.length - 1; i >= 0; i--) {
+            if (isPointCloseToElement(mouseX, mouseY, figures[i])) {
+                scalingElementIndex = i;
+                break;
+            }
+        }
+        if (scalingElementIndex !== -1) {
+            originalWidth = figures[scalingElementIndex].width;
+            originalHeight = figures[scalingElementIndex].height;
+            startX = mouseX;
+            startY = mouseY;
+        }
+    } else if(drawMode === 'rotate') {
+        // Iniciar rotación
+        isRotating = true;
+        rotationElementIndex = -1; // Reiniciar el índice del elemento a rotar
+
+        // Encontrar el elemento de rotación más cercano
+        for (let i = figures.length - 1; i >= 0; i--) {
+            if (isPointCloseToElement(mouseX, mouseY, figures[i])) {
+                rotationElementIndex = i;
+                break;
+            }
+        }    
+        // Guardar la posición del ratón al iniciar la rotación
+        rotationStartX = mouseX;
+        rotationStartY = mouseY;
     } else {
         // Si no se hizo clic en ningún elemento existente, comenzar un nuevo dibujo
         isDrawing = true;
@@ -528,9 +797,8 @@ canvas.addEventListener('mousemove', function (e) {
 
     if (isDragging) {
         // Calcula la diferencia de la posición desde que empezo el arrastre
-        const deltaX = mouseX - dragStartX;
-        const deltaY = mouseY - dragStartY;
-
+        deltaX = mouseX - dragStartX;
+        deltaY = mouseY - dragStartY;
         // Actualiza coordenadas del elemento
         const draggedElement = figures[draggedElementIndex];
         if (draggedElement) {
@@ -541,6 +809,11 @@ canvas.addEventListener('mousemove', function (e) {
                         draggedElement.points[i].y += deltaY;
                     }
                     break;
+                case 'text':
+                    // Actualizar las coordenadas del texto
+                    draggedElement.x += deltaX;
+                    draggedElement.y += deltaY;
+                    break;
                 case 'line':
                     draggedElement.startX += deltaX;
                     draggedElement.startY += deltaY;
@@ -550,8 +823,8 @@ canvas.addEventListener('mousemove', function (e) {
                 case 'square':
                     draggedElement.startX += deltaX;
                     draggedElement.startY += deltaY;
-                    draggedElement.endX += deltaX;
-                    draggedElement.endY += deltaY;
+                    draggedElement.EndX += deltaX;
+                    draggedElement.EndY += deltaY;
                     break;
                 case 'rectangle':
                     draggedElement.startX += deltaX;
@@ -588,13 +861,182 @@ canvas.addEventListener('mousemove', function (e) {
                 default:
                     break;
             }
-        }
 
-        // Redibuja el canvas con los elementos arrastrados
-        draw();
+            // Redibuja el canvas con los elementos arrastrados
+            draw();
+        }
 
         dragStartX = mouseX;
         dragStartY = mouseY;
+    
+    } else if (isScalating) {
+        // Obtener la figura a escalar
+        const scalingElement = figures[scalingElementIndex];
+        if (scalingElement) {
+            
+            switch (scalingElement.type) {
+                case 'line':
+                    // Calcular el desplazamiento del ratón desde el punto de inicio de la línea
+                    const lineDeltaX= mouseX - scalingElement.startX;
+                    const lineDeltaY = mouseY - scalingElement.startY;
+
+                    // Actualizar las coordenadas del punto final de la línea en función del desplazamiento del ratón
+                    scalingElement.endX = scalingElement.startX + lineDeltaX;
+                    scalingElement.endY = scalingElement.startY + lineDeltaY;
+                    break;
+                case 'square':
+                    // Calcular la mitad del lado actual del cuadrado
+                    const currentHalfSide = scalingElement.length / 2;
+
+                    // Calcular el centro del cuadrado
+                    const squareCenterX = scalingElement.startX + currentHalfSide;
+                    const squareCenterY = scalingElement.startY + currentHalfSide;
+
+                    // Calcular el desplazamiento del ratón desde el centro
+                    const squareDeltaX = mouseX - squareCenterX;
+                    const squareDeltaY = mouseY - squareCenterY;
+
+                    // Calcular la nueva longitud del lado
+                    const newHalfSide1 = currentHalfSide + squareDeltaX;
+                    const newHalfSide2 = currentHalfSide + squareDeltaY;
+
+
+                    // Actualizar las coordenadas de los puntos extremos del cuadrado
+                    scalingElement.startX = mouseX - newHalfSide1;
+                    scalingElement.startY = mouseY - newHalfSide2;
+                    scalingElement.length = newHalfSide1 * 2;
+                    break;
+                case 'rectangle':
+                    // Calcular el vértice opuesto al vértice de referencia para el redimensionamiento
+                    let oppositeVertexX = scalingElement.startX + scalingElement.width;
+                    let oppositeVertexY = scalingElement.startY + scalingElement.height;
+
+                    // Ajustar las coordenadas del vértice opuesto al vértice de referencia para seguir al cursor
+                    oppositeVertexX = mouseX;
+                    oppositeVertexY = mouseY;
+
+                    // Calcular las nuevas dimensiones del rectángulo
+                    const newWidth = oppositeVertexX - scalingElement.startX;
+                    const newHeight = oppositeVertexY - scalingElement.startY;
+
+                    // Ajustar las dimensiones del rectángulo
+                    scalingElement.width = newWidth;
+                    scalingElement.height = newHeight;
+                    break;
+                case 'circle':
+                    // Calcular la posición del punto medio del círculo
+                    const circleCenterX = scalingElement.xc;
+                    const circleCenterY = scalingElement.yc;
+
+                    // Calcular la distancia desde el punto medio original hasta el punto actual del ratón
+                    const circleDeltaX = mouseX - circleCenterX;
+                    const circleDeltaY = mouseY - circleCenterY;
+                    const newRadius = Math.sqrt(circleDeltaX * circleDeltaX + circleDeltaY * circleDeltaY);
+
+                    // Obtener el radio original del círculo
+                    const originalRadius = scalingElement.radius;
+
+                    // Calcular la diferencia entre el radio actual y el radio original
+                    const radiusDifference = newRadius - originalRadius;
+
+                    // Actualizar el radio del círculo sumando la diferencia al radio original
+                    scalingElement.radius = originalRadius + radiusDifference;
+                    break;
+                case 'ellipse':
+                    // Calcular el centro de la elipse
+                    const ellipseCenterX = (scalingElement.x0 + scalingElement.x1) / 2;
+                    const ellipseCenterY = (scalingElement.y0 + scalingElement.y1) / 2;
+
+                    const ellipseDeltaX = mouseX - ellipseCenterX;
+                    const ellipseDeltaY = mouseY - ellipseCenterY;
+
+                    // Actualizar las coordenadas de los puntos extremos de la elipse
+                    scalingElement.x0 = ellipseCenterX - ellipseDeltaX;
+                    scalingElement.x1 = ellipseCenterX + ellipseDeltaX;
+                    scalingElement.y0 = ellipseCenterY - ellipseDeltaY;
+                    scalingElement.y1 = ellipseCenterY + ellipseDeltaY;
+                    break
+                case 'polygone':
+                    // Calcular el desplazamiento del ratón desde el centro del polígono
+                    const polygonDeltaX = mouseX - scalingElement.centerX;
+                    const polygoneDeltaY = mouseY - scalingElement.centerY;
+
+                    // Calcular el nuevo radio del polígono
+                    const newRadiusPolygone = Math.sqrt(polygonDeltaX * polygonDeltaX + polygoneDeltaY * polygoneDeltaY);
+
+                    // Actualizar el radio del polígono
+                    scalingElement.radius = newRadiusPolygone;
+                    break;
+                case 'rhombus':
+                    // Calcular el centro del rombo
+                    const rhombusCenterX = (scalingElement.startX + scalingElement.endX) / 2;
+                    const rhombusCenterY = (scalingElement.startY + scalingElement.endY) / 2;
+
+                    // Calcular el desplazamiento del ratón desde el centro del rombo
+                    const rhombusDeltaX = mouseX - rhombusCenterX;
+                    const rhombusDeltaY = mouseY - rhombusCenterY;
+
+                    // Actualizar las coordenadas de los puntos extremos del rombo
+                    scalingElement.startX = rhombusCenterX - rhombusDeltaX;
+                    scalingElement.startY = rhombusCenterY - rhombusDeltaY;
+                    scalingElement.endX = rhombusCenterX + rhombusDeltaX;
+                    scalingElement.endY = rhombusCenterY + rhombusDeltaY;
+                    break;
+                case 'trapezoid':
+                                        // Calcular el centro del trapecio
+                    const trapezoidCenterX = (scalingElement.startX + scalingElement.endX) / 2;
+                    const trapezoidCenterY = (scalingElement.startY + scalingElement.endY) / 2;
+
+                    // Calcular el desplazamiento del ratón desde el centro del trapecio
+                    const trapezoidDeltaX = mouseX - trapezoidCenterX;
+                    const trapezoidDeltaY = mouseY - trapezoidCenterY;
+
+                    // Actualizar las coordenadas de los puntos extremos del trapecio
+                    scalingElement.startX = trapezoidCenterX - trapezoidDeltaX;
+                    scalingElement.startY = trapezoidCenterY - trapezoidDeltaY;
+                    scalingElement.endX = trapezoidCenterX + trapezoidDeltaX;
+                    scalingElement.endY = trapezoidCenterY + trapezoidDeltaY;
+                    break;
+            }
+        }
+
+        // Redibujar el lienzo con los elementos escalados
+        draw();
+    } else if (isRotating) {
+        const rotationElement = figures[rotationElementIndex];
+        // Utilizar el punto inicial como el centro de rotación
+        const startX = rotationElement.startX;
+        const startY = rotationElement.startY;
+
+        // Calcular el ángulo de rotación con respecto al punto inicial
+        const angle = Math.atan2(mouseY - startY, mouseX - startX);
+
+        switch (rotationElement.type) {
+            case 'line':
+                // Calcular la longitud de la línea
+                const length = Math.sqrt((rotationElement.endX - startX) ** 2 + (rotationElement.endY - startY) ** 2);
+
+                // Calcular las nuevas coordenadas del punto final
+                rotationElement.endX = startX + length * Math.cos(angle);
+                rotationElement.endY = startY + length * Math.sin(angle);
+                break;
+            case 'square':
+                const sideLength = Math.min(Math.abs(startX - mouseX), Math.abs(startY - mouseY));
+
+                // Calcular las coordenadas del punto final del cuadrado en función del lado y la posición del mouse
+                let endX = startX + (mouseX > startX ? sideLength : -sideLength);
+                let endY = startY + (mouseY > startY ? sideLength : -sideLength);
+            
+                rotationElement.endX = endX;
+                rotationElement.endY = endY;
+                break;
+            // Agregar casos para otras formas si es necesario
+            default:
+                break;
+        }
+        
+        // Redibujar el lienzo con los elementos rotados
+        draw();
     } else if (isDrawing) {
         if (drawMode === 'pencil') {
             pencil(mouseX, mouseY);
@@ -627,7 +1069,7 @@ canvas.addEventListener('mouseup', function () {
                 const length = Math.min(lengthX, lengthY);
                 const xSign = Math.sign(mouseX - startX);
                 const ySign = Math.sign(mouseY - startY);
-                figures.push({ type: 'square', startX: startX, startY: startY, length: length, xSign: xSign, ySign: ySign, color: color, thickness: thickness });
+                figures.push({ type: 'square', startX: startX, startY: startY, length: length, endX: xSign, endY: ySign, color: color, thickness: thickness });
                 break;
             case 'rectangle':
                 const width = Math.abs(mouseX - startX);
@@ -656,17 +1098,24 @@ canvas.addEventListener('mouseup', function () {
                 const y1 = y0 + height0; // Center Y coordinate
                 figures.push({ type: 'rhombus', startX: x0, startY: y0, endX: x1, endY: y1, color: color, thickness: thickness });
                 break;
-                case 'trapezoid':
-                    figures.push({ type: 'trapezoid', startX: startX, startY: startY, endX: mouseX, endY: mouseY, color: color, thickness: thickness });
-                    break;
+            case 'trapezoid':
+                figures.push({ type: 'trapezoid', startX: startX, startY: startY, endX: mouseX, endY: mouseY, color: color, thickness: thickness });
+                break;
             default:
                 break;
         }
+    } else if (isScalating) {
+        isScalating = false;
+        //scalingElementIndex = -1;
+    } else if (isRotating) {
+        isRotating = false;
     }
 });
 
 function isPointCloseToElement(x, y, element) {
     switch (element.type) {
+        case 'text':
+            return isPointCloseToText(x, y, element);
         case 'line':
             return isPointCloseToLine(x, y, element);
         case 'square':
@@ -686,6 +1135,23 @@ function isPointCloseToElement(x, y, element) {
         default:
             return false;
     }
+}
+
+// Función específica para verificar si el punto está cerca del texto
+function isPointCloseToText(x, y, textElement) {
+    // Obtener el contexto del lienzo y establecer la fuente para medir el texto
+    ctx.font = textElement.font;
+    // Calcular las dimensiones del texto
+    const textWidth = ctx.measureText(textElement.text).width;
+    const textHeight = parseInt(textElement.font);
+
+    // Verificar si el punto está dentro de las coordenadas del texto
+    if (x >= textElement.x && x <= textElement.x + textWidth &&
+        y >= textElement.y - textHeight && y <= textElement.y) {
+        return true;
+    }
+
+    return false;
 }
 
 function isPointCloseToLine(x, y, line) {
@@ -826,10 +1292,15 @@ function changeDrawMode(mode) {
 
 //Todo lo que se dibuje en el canvas va al arreglo Figures
 
-//El borrador (eraser) es una mexicanada que no sirve, solo raya a mano libre pero del mismo color del canvas.
-
-//La función floodFill es una mala implementación del algoritmo de relleno de inundación pero tiene detalles, 
+//La función floodFill es una implementación del algoritmo de relleno de inundación pero tiene detalles, 
 //es lento porque consume muchos recursos y no almacena los pixeles de la region rellenada, de modo que si 
 //mueves una figura con relleno este se elimina
 
 //Autores de este monstruo spaghetti: IV4N0001 - ChatGPT. 20/03/2024 - 07:59 P.M.
+
+//Actualización: 08/04/2024 
+//Ahora tiene la transformación de escalado, la unica figura que tiene la transformación de rotación es la linea recta (gira en torno al punto inicial)
+//tal vez el problema por el que no se pueden rotar el resto de figuras es porque en mi estructura de datos no almaceno todos los vertices de las figuras,
+//solo los necesarios para dibujar la figura
+
+//Ahora tiene previsualización del canvas, acomodo de figuras por capas y guardar datos del canvas y abrirlos en formato JSON.

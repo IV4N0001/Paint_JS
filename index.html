@@ -5,10 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
     <title>Canvas Drawing</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.js"></script>
 </head>
 <body>
     <canvas id="canvas" width="800" height="550"></canvas>
     <div id="shapes-buttons">
+        <button onclick="drawMode = 'text';" title="Texto"><img src="icons/text.svg" alt="Texto"></button>   
         <button onclick="drawMode = 'pencil';" title="Lapiz"><img src="icons/pencil.svg" alt="Lapiz"></button>
         <button onclick="drawMode = 'eraser';" title="Borrador"><img src="icons/eraser.svg" alt="Borrador"></button>
         <button onclick="drawMode = 'line';" title="Linea Recta"><img src="icons/linear.svg" alt="Linea Recta"></button>
@@ -60,10 +63,19 @@
         <button id="undoButton" title="Retroceder"><img src="icons/arrow-back.svg"></button>
         <button id="redoButton" title="Avanzar"><img src="icons/arrow-next.svg"></button>
         <button id="hand" title="Agarrar"><img src="icons/hand.svg"></button>
-        <!--<button id="scale" title="Redimensionar"><img src="icons/size.svg"></button>-->
-        <!--<button id="rotate" title="Rotar"><img src="icons/rotate.svg"></button>-->
+        <button id="scale" title="Redimensionar"><img src="icons/size.svg"></button>
+        <button id="rotate" title="Rotar"><img src="icons/rotate.svg"></button>
         <button id="fill" title="Relleno"><img src="icons/paint-bucket.svg"></button>
+        <button id="layerLower" title="Capa abajo"><img src="icons/layer-lower.svg"></button>
+        <button id="layerRaise" title="Capa arriba"><img src="icons/layer-raise.svg"></button>
+        <button id="layerBottom" title="Capa al fondo"><img src="icons/layer-bottom.svg"></button>
+        <button id="layerTop" title="Capa al tope"><img src="icons/layer-top.svg"></button>
+        <button id="saveData" title="Guardar data del canvas" onclick="saveData()"><img src="icons/save.svg"></button>
+        <input type="file" id="fileInput" style="display: none;">
+        <button id="openData" title="Abrir data del canvas" onclick="openData()"><img src="icons/open-file.svg"></button>
         <button id="clear" title="Limpiar canvas" onclick="clearCanvas()"><img src="icons/clear-canvas.svg"></button>
+        <button id="preview" title="Previsualizar" onclick="previewCanvas()"><img src="icons/preview.svg"></button>
+        <button id="pdf" title="Guardar canvas como PDF" onclick="saveAsPDF()"><img src="icons/pdf.svg"></button>
         <button id="png" title="Guardar canvas como PNG" onclick="saveAsPNG()"><img src="icons/png.svg"></button>
         <input type="text" id="namePNG" placeholder="Nombre del archivo">
     </div>
