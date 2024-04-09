@@ -1298,7 +1298,7 @@ function changeDrawMode(mode) {
 
 //Autores de este monstruo spaghetti: IV4N0001 - ChatGPT. 20/03/2024 - 07:59 P.M.
 
-//Actualización: 08/04/2024 
+//Actualización: 08/04/2024 - 07:43 P.M.
 
 //Ahora tiene la transformación de escalado, la unica figura que tiene la transformación de rotación es la linea recta (gira en torno al punto inicial)
 //tal vez el problema por el que no se pueden rotar el resto de figuras es porque en mi estructura de datos no almaceno todos los vertices de las figuras,
